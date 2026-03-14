@@ -11,7 +11,7 @@
     "express": "^4.18.2",
     "cors": "^2.8.5",
     "@anthropic-ai/sdk": "^0.16.0",
-    "docx": "^8.12.4"
+    "docx": "^8.5.0"
   },
   "engines": {
     "node": "18.x"
