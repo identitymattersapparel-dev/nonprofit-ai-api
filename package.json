@@ -1,14 +1,3 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta http-equiv="refresh" content="0; url=agent-communication.html">
-<title>RealtyAI</title>
-</head>
-<body>
-<script>window.location.href = 'agent-communication.html';</script>
-</body>
-</html>
 {
   "name": "nonprofit-ai-api",
   "version": "1.0.0",
