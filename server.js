@@ -118,7 +118,7 @@ The narrative should be ready for a grant officer to review and refine, and shou
 
       // Proxy to Anthropic API
       const claudeBody = JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-haiku-4-5-20251001',
         max_tokens: 2000,
         system: systemPrompt,
         messages: [
