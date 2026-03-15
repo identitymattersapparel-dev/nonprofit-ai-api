@@ -145,8 +145,11 @@ The narrative should be ready for a grant officer to review and refine, and shou
         let responseData = '';
         anthropicRes.on('data', chunk => { responseData += chunk; });
         anthropicRes.on('end', () => {
+          console.log('Claude response status:', anthropicRes.statusCode);
+          console.log('Claude response data:', responseData.substring(0, 500)); // Log first 500 chars
           try {
             const parsed = JSON.parse(responseData);
+            console.log('Parsed response:', JSON.stringify(parsed, null, 2).substring(0, 500));
             // Extract narrative from Claude response
             const narrative = parsed.content && parsed.content[0] && parsed.content[0].text
               ? parsed.content[0].text
@@ -155,6 +158,7 @@ The narrative should be ready for a grant officer to review and refine, and shou
             res.writeHead(200, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ narrative }));
           } catch (e) {
+            console.error('Parse error:', e);
             res.writeHead(500, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Failed to parse Claude response', details: responseData }));
           }
