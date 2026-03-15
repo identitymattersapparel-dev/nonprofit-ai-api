@@ -7,8 +7,8 @@ const app = express();
 
 // Middleware
 app.use(cors({
-  origin: 'https://cheery-concha-d22798.netlify.app',
-  credentials: true
+  origin: '*',
+  credentials: false
 }));
 app.use(express.json({ limit: '50mb' }));
 
@@ -19,10 +19,22 @@ const anthropic = new Anthropic({
 
 /**
  * POST /generate-grant-narrative
- * Generates a grant narrative from RFP text
+ * Generates a grant narrative from RFP text and organizational context
  */
 app.post('/generate-grant-narrative', async (req, res) => {
-  const { rfpText, organizationName, organizationMission, tone } = req.body;
+  const {
+    rfpText,
+    organizationName,
+    organizationMission,
+    yearsInOperation,
+    annualBudget,
+    staffAndVolunteers,
+    peopleServedAnnually,
+    projectTitle,
+    projectDescription,
+    pastAccomplishments,
+    tone
+  } = req.body;
 
   if (!rfpText || !organizationName) {
     return res.status(400).json({
@@ -31,12 +43,19 @@ app.post('/generate-grant-narrative', async (req, res) => {
   }
 
   try {
-    const narrative = await generateNarrative(
-      rfpText,
+    const organizationData = {
       organizationName,
       organizationMission,
-      tone
-    );
+      yearsInOperation,
+      annualBudget,
+      staffAndVolunteers,
+      peopleServedAnnually,
+      projectTitle,
+      projectDescription,
+      pastAccomplishments
+    };
+
+    const narrative = await generateNarrative(rfpText, organizationData, tone);
 
     return res.json({ narrative });
   } catch (error) {
@@ -84,7 +103,19 @@ app.get('/health', (req, res) => {
 /**
  * Generate grant narrative using Claude
  */
-async function generateNarrative(rfpText, organizationName, organizationMission, tone) {
+async function generateNarrative(rfpText, organizationData, tone) {
+  const {
+    organizationName,
+    organizationMission,
+    yearsInOperation,
+    annualBudget,
+    staffAndVolunteers,
+    peopleServedAnnually,
+    projectTitle,
+    projectDescription,
+    pastAccomplishments
+  } = organizationData;
+
   const toneInstructions = {
     professional: `Use formal, grant-appropriate language. Emphasize credentials, outcomes, and organizational capacity. Include specific data points and metrics. Use active voice and confident statements. This should sound like a traditional foundation grant proposal.`,
     
@@ -93,38 +124,58 @@ async function generateNarrative(rfpText, organizationName, organizationMission,
     impact: `Lead with the human impact and outcomes. Focus on who benefits and how lives change. Use compelling storytelling while remaining data-backed. Emphasize the urgency and relevance of the work. Make emotional connection while maintaining credibility.`
   };
 
-  const systemPrompt = `You are an expert grant writer for nonprofit organizations. You analyze grant RFPs (Requests for Proposal) and draft compelling grant narratives.
+  const systemPrompt = `You are an expert grant writer for nonprofit organizations. You analyze grant RFPs and draft compelling, data-backed grant narratives using organizational context.
 
 Your task is to:
 1. Carefully read and analyze the RFP requirements
 2. Extract key requirements, preferences, and evaluation criteria
-3. Draft a compelling grant narrative that addresses all requirements
-4. Use the specified tone and style
+3. Draft a compelling grant narrative that directly addresses all requirements
+4. Integrate the organization's background, experience, and track record throughout
+5. Use the specified tone and style
 
 IMPORTANT INSTRUCTIONS:
 - Address all stated requirements in the RFP
 - Use specific language from the RFP (echo their priorities)
-- Include concrete examples and projected outcomes
-- Demonstrate organizational capacity and track record (use realistic but compelling details)
+- Incorporate organizational data (years operating, budget, staff, people served) naturally
+- Include concrete examples and past accomplishments when provided
+- Demonstrate organizational capacity and track record with specific details
 - Keep narrative cohesive and flowing
-- Aim for 400-600 words unless RFP specifies length
+- Aim for 500-750 words unless RFP specifies length
 - Format as readable paragraphs (not bullet points)
+- Make the narrative compelling while maintaining credibility
 
 ${toneInstructions[tone] || toneInstructions.professional}`;
 
-  const userPrompt = `Generate a grant narrative for this RFP:
+  const userPrompt = `Generate a compelling grant narrative for this RFP using the following organizational context:
 
 ORGANIZATION: ${organizationName}
-${organizationMission ? `MISSION: ${organizationMission}` : ''}
+MISSION: ${organizationMission}
+YEARS IN OPERATION: ${yearsInOperation} years
+ANNUAL BUDGET: $${parseInt(annualBudget).toLocaleString()}
+STAFF & VOLUNTEERS: ${staffAndVolunteers}
+PEOPLE SERVED ANNUALLY: ${parseInt(peopleServedAnnually).toLocaleString()}
+
+PROJECT TITLE: ${projectTitle}
+PROJECT DESCRIPTION: ${projectDescription}
+
+${pastAccomplishments ? `PAST ACCOMPLISHMENTS: ${pastAccomplishments}` : ''}
 
 RFP TEXT:
 ${rfpText}
 
-Draft a compelling grant narrative that directly addresses the RFP requirements and demonstrates why this organization deserves funding. The narrative should be ready for a grant officer to review and refine.`;
+Draft a professional grant narrative that:
+1. Demonstrates the organization's experience and capacity (${yearsInOperation} years operating)
+2. Shows proven impact (staff size, people served)
+3. Describes the proposed project and its alignment with RFP priorities
+4. Incorporates specific organizational data naturally throughout
+5. Includes past accomplishments to build credibility
+6. Compels the reader to fund this organization
+
+The narrative should be ready for a grant officer to review and refine, and should feel authentic to this specific organization.`;
 
   const message = await anthropic.messages.create({
-   model: 'claude-3-5-haiku-20241022',
-    max_tokens: 1500,
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: 2000,
     system: systemPrompt,
     messages: [
       {
