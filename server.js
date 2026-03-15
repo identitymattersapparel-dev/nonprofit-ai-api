@@ -123,7 +123,7 @@ ${rfpText}
 Draft a compelling grant narrative that directly addresses the RFP requirements and demonstrates why this organization deserves funding. The narrative should be ready for a grant officer to review and refine.`;
 
   const message = await anthropic.messages.create({
-    model: 'claude-haiku-4-20250507',
+   model: 'claude-3-5-haiku-20241022',
     max_tokens: 1500,
     system: systemPrompt,
     messages: [
