@@ -174,7 +174,7 @@ Draft a professional grant narrative that:
 The narrative should be ready for a grant officer to review and refine, and should feel authentic to this specific organization.`;
 
   const message = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-3-opus-20250219',
     max_tokens: 2000,
     system: systemPrompt,
     messages: [
